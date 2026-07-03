@@ -1,0 +1,56 @@
+# =============================================================================
+# Core Web Framework
+# =============================================================================
+flask==3.0.0
+Werkzeug==3.0.1
+python-dotenv==1.0.0
+
+# =============================================================================
+# AI/ML Services
+# =============================================================================
+# Azure Document Intelligence (field extraction, OCR, layout analysis)
+azure-ai-documentintelligence==1.0.0b4
+
+# OpenAI GPT-4o (semantic field mapping and normalization)
+openai==1.35.0
+# httpx>=0.28 dropped the 'proxies' kwarg that openai==1.35.0 still passes -> TypeError
+httpx==0.27.2
+
+# CommonForms (static PDF → fillable PDF conversion)
+commonforms>=0.2.0
+
+# =============================================================================
+# PDF Processing
+# =============================================================================
+# PyMuPDF - PDF manipulation, field detection, form filling
+PyMuPDF>=1.26.6
+
+# pypdf - PDF quality analysis, batch processing
+pypdf>=3.0.0
+
+# pdf2image - Convert PDF pages to images for quality analysis
+pdf2image>=1.16.0
+
+# =============================================================================
+# Data Processing & Utilities
+# =============================================================================
+# numpy - Array operations, quality analysis
+numpy>=1.24.0
+
+# =============================================================================
+# System Dependencies (Not Python packages)
+# =============================================================================
+# NOTE: pdf2image requires Poppler to be installed on your system
+#
+# Windows:
+#   1. Download Poppler: https://github.com/oschwartz10612/poppler-windows/releases
+#   2. Extract and add bin/ folder to PATH
+#
+# Linux (Ubuntu/Debian):
+#   sudo apt-get install poppler-utils
+#
+# macOS:
+#   brew install poppler
+#
+# CommonForms CLI tool should be installed separately:
+#   pip install commonforms

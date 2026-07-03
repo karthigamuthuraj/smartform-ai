@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartForm AI</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d9488 0%, #0369a1 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 760px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0d9488 0%, #0369a1 100%);
+            color: white;
+            padding: 36px 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        /* Progress rail */
+        .rail {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 36px;
+        }
+
+        .rail-step {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .rail-step .dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            z-index: 1;
+        }
+
+        .rail-step .label {
+            margin-top: 8px;
+            font-size: 0.8em;
+            color: #999;
+            font-weight: 600;
+        }
+
+        .rail-step.active .dot {
+            background: linear-gradient(135deg, #0d9488 0%, #0369a1 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(13,148,136,0.5);
+        }
+
+        .rail-step.active .label {
+            color: #0d9488;
+        }
+
+        .rail-step.done .dot {
+            background: #4caf50;
+            color: white;
+        }
+
+        .rail-step.done .label {
+            color: #4caf50;
+        }
+
+        .rail-line {
+            flex: 1;
+            height: 3px;
+            background: #e0e0e0;
+            margin: 0 -4px;
+            margin-bottom: 22px;
+            transition: background 0.3s;
+        }
+
+        .rail-line.done {
+            background: #4caf50;
+        }
+
+        .card {
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 14px;
+            font-size: 1.2em;
+        }
+
+        .file-upload {
+            border: 3px dashed #0d9488;
+            padding: 36px;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.25s;
+            background: #f0faf9;
+        }
+
+        .file-upload:hover {
+            border-color: #0369a1;
+            background: #e6f5f3;
+        }
+
+        .file-upload.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-label {
+            font-size: 1.1em;
+            color: #0d9488;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .file-upload-hint {
+            margin-top: 6px;
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #0d9488 0%, #0369a1 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 1.05em;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s;
+            box-shadow: 0 4px 15px rgba(13, 148, 136, 0.4);
+            width: 100%;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 148, 136, 0.55);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.95em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 140px;
+            margin-bottom: 18px;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #0d9488;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #eefaf0;
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-top: 14px;
+            border: 2px solid #4caf50;
+            font-size: 0.95em;
+        }
+
+        .file-info .check {
+            color: #4caf50;
+            font-size: 1.3em;
+        }
+
+        .status-banner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+        }
+
+        .status-banner.processing {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+
+        .status-banner.error {
+            background: #fdecea;
+            border-left: 4px solid #e53935;
+            color: #b71c1c;
+        }
+
+        .status-banner .status-text {
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        .spinner {
+            border: 3px solid rgba(33,150,243,0.2);
+            border-radius: 50%;
+            border-top: 3px solid #2196f3;
+            width: 26px;
+            height: 26px;
+            animation: spin 0.9s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            background: #eefaf0;
+            border-radius: 14px;
+            padding: 28px;
+            text-align: center;
+        }
+
+        .results h3 {
+            color: #2e7d32;
+            font-size: 1.3em;
+            margin-bottom: 6px;
+        }
+
+        .results .stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin: 18px 0;
+        }
+
+        .results .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #2e7d32;
+        }
+
+        .results .stat-label {
+            font-size: 0.8em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .download-btn {
+            background: #4caf50;
+            box-shadow: 0 4px 15px rgba(76,175,80,0.4);
+            width: auto;
+            padding: 16px 40px;
+        }
+
+        .download-btn:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(76,175,80,0.55);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ SmartForm AI</h1>
+            <p>Upload a PDF → Describe your data → Get it filled instantly</p>
+        </div>
+
+        <div class="content">
+            <!-- Progress rail -->
+            <div class="rail" id="rail">
+                <div class="rail-step active" data-step="1">
+                    <div class="dot">1</div>
+                    <div class="label">Upload</div>
+                </div>
+                <div class="rail-line" id="line1"></div>
+                <div class="rail-step" data-step="2">
+                    <div class="dot">2</div>
+                    <div class="label">Describe</div>
+                </div>
+                <div class="rail-line" id="line2"></div>
+                <div class="rail-step" data-step="3">
+                    <div class="dot">3</div>
+                    <div class="label">Fill</div>
+                </div>
+                <div class="rail-line" id="line3"></div>
+                <div class="rail-step" data-step="4">
+                    <div class="dot">4</div>
+                    <div class="label">Download</div>
+                </div>
+            </div>
+
+            <!-- Upload -->
+            <div class="card">
+                <div class="file-upload" id="fileUploadArea">
+                    <label for="fileInput" class="file-upload-label">📄 Click or drag a PDF here</label>
+                    <div class="file-upload-hint">PDF form, up to 50MB</div>
+                    <input type="file" id="fileInput" accept=".pdf">
+                </div>
+                <div id="fileInfo" class="file-info hidden">
+                    <span class="check">✓</span>
+                    <span><strong>Uploaded:</strong> <span id="fileName"></span></span>
+                </div>
+            </div>
+
+            <!-- Describe + Fill -->
+            <div class="card hidden" id="step2">
+                <h2>Tell us what to fill in</h2>
+                <textarea id="userData" placeholder="Name: John Smith&#10;Email: john@email.com&#10;Phone: (555) 123-4567&#10;Address: 123 Main St, NY 10001&#10;Date of Birth: 01/15/1990"></textarea>
+                <button class="btn" id="fillDocumentBtn">🚀 Fill Document</button>
+            </div>
+
+            <!-- Processing -->
+            <div id="processingStatus" class="status-banner processing hidden">
+                <div class="spinner"></div>
+                <span class="status-text">Processing your document — this can take up to a minute...</span>
+            </div>
+
+            <!-- Error -->
+            <div id="errorBanner" class="status-banner error hidden">
+                <span>⚠️</span>
+                <span id="errorText"></span>
+            </div>
+
+            <!-- Results -->
+            <div id="fillStatus" class="results hidden">
+                <h3>✅ Document filled successfully</h3>
+                <div class="stats">
+                    <div>
+                        <div class="stat-value" id="totalFieldCount">0</div>
+                        <div class="stat-label">Fields Found</div>
+                    </div>
+                    <div>
+                        <div class="stat-value" id="filledCount">0</div>
+                        <div class="stat-label">Fields Filled</div>
+                    </div>
+                </div>
+                <button class="btn download-btn" id="downloadBtn">⬇️ Download Filled PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedFilePath = null;
+        let filledPdfFilename = null;
+
+        const fileInput = document.getElementById('fileInput');
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const fileName = document.getElementById('fileName');
+        const fileInfo = document.getElementById('fileInfo');
+        const step2 = document.getElementById('step2');
+        const fillDocumentBtn = document.getElementById('fillDocumentBtn');
+        const userData = document.getElementById('userData');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const processingStatus = document.getElementById('processingStatus');
+        const fillStatus = document.getElementById('fillStatus');
+        const errorBanner = document.getElementById('errorBanner');
+        const errorText = document.getElementById('errorText');
+
+        function setRailStep(step) {
+            document.querySelectorAll('.rail-step').forEach(el => {
+                const n = parseInt(el.dataset.step, 10);
+                el.classList.remove('active', 'done');
+                if (n < step) el.classList.add('done');
+                else if (n === step) el.classList.add('active');
+            });
+            ['line1', 'line2', 'line3'].forEach((id, i) => {
+                document.getElementById(id).classList.toggle('done', step > i + 1);
+            });
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorBanner.classList.remove('hidden');
+        }
+
+        function clearError() {
+            errorBanner.classList.add('hidden');
+        }
+
+        // Step 1: Upload
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            clearError();
+            processingStatus.classList.add('hidden');
+            fillStatus.classList.add('hidden');
+            userData.value = '';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/upload', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.success) {
+                    uploadedFilePath = data.filepath;
+                    fileName.textContent = data.original_filename;
+                    fileInfo.classList.remove('hidden');
+                    step2.classList.remove('hidden');
+                    setRailStep(2);
+                } else {
+                    showError(data.error || 'Upload failed');
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.style.borderColor = '#0d9488';
+        });
+
+        fileUploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            fileUploadArea.style.borderColor = '#0d9488';
+        });
+
+        fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Step 2: Fill
+        fillDocumentBtn.addEventListener('click', async () => {
+            if (!uploadedFilePath) {
+                showError('Please upload a file first');
+                return;
+            }
+            if (!userData.value.trim()) {
+                showError('Please describe the data to fill in');
+                return;
+            }
+
+            clearError();
+            setRailStep(3);
+            processingStatus.classList.remove('hidden');
+            fillDocumentBtn.disabled = true;
+            fillDocumentBtn.innerHTML = '⏳ Processing...';
+            fillStatus.classList.add('hidden');
+            fileInput.disabled = true;
+            fileUploadArea.classList.add('disabled');
+
+            try {
+                const response = await fetch('/api/process-and-fill', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filepath: uploadedFilePath,
+                        file_type: 'pdf',
+                        natural_language_input: userData.value
+                    })
+                });
+
+                const data = await response.json();
+
+                processingStatus.classList.add('hidden');
+
+                if (data.success) {
+                    filledPdfFilename = data.output_filename;
+                    document.getElementById('totalFieldCount').textContent = data.total_fields;
+                    document.getElementById('filledCount').textContent = data.filled_count;
+                    fillStatus.classList.remove('hidden');
+                    setRailStep(4);
+                } else {
+                    showError(data.error || 'Processing failed');
+                    setRailStep(2);
+                }
+            } catch (error) {
+                processingStatus.classList.add('hidden');
+                showError(error.message);
+                setRailStep(2);
+            } finally {
+                fillDocumentBtn.disabled = false;
+                fillDocumentBtn.innerHTML = '🚀 Fill Document';
+                fileInput.disabled = false;
+                fileUploadArea.classList.remove('disabled');
+            }
+        });
+
+        // Download
+        downloadBtn.addEventListener('click', () => {
+            if (filledPdfFilename) {
+                window.location.href = `/api/download/${filledPdfFilename}`;
+            }
+        });
+    </script>
+</body>
+</html>
